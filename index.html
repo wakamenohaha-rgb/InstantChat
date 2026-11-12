@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="ja" class="h-full" style="--font-size-base: 16px; --bubble-radius: 1rem;"><head><script>window.__EMBEDDED_APP_ID__="linkchat-universal-app";window.__EMBEDDED_FIREBASE_CONFIG__="{\"apiKey\":\"AIzaSyC73PTavjbF4fh7Zsofyrg4XeSR9AkWv-4\",\"authDomain\":\"instantchat-a1477.firebaseapp.com\",\"databaseURL\":\"https://instantchat-a1477-default-rtdb.asia-southeast1.firebasedatabase.app\",\"projectId\":\"instantchat-a1477\",\"storageBucket\":\"instantchat-a1477.firebasestorage.app\",\"messagingSenderId\":\"306083483083\",\"appId\":\"1:306083483083:web:2d0719751fb94475c3fa4e\"}";</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkChat - ユニバーサルWebチャット</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QRCode.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- LZ-String for URL/Data Compression -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        theme: {
+                            primary: 'var(--color-primary)',
+                            'primary-hover': 'var(--color-primary-hover)',
+                            bg: 'var(--color-bg)',
+                            surface: 'var(--color-surface)',
+                            text: 'var(--color-text)',
+                            border: 'var(--color-border)',
+                            bubbleSelf: 'var(--color-bubble-self)',
+                            bubbleOther: 'var(--color-bubble-other)',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* CSS Variables for Dynamic Themes */
+        :root {
+            --color-primary: #3b82f6;
+            --color-primary-hover: #2563eb;
+            --color-bg: #f3f4f6;
+            --color-surface: #ffffff;
+            --color-text: #1f2937;
+            --color-border: #e5e7eb;
+            --color-bubble-self: #3b82f6;
+            --color-bubble-self-text: #ffffff;
+            --color-bubble-other: #e5e7eb;
+            --color-bubble-other-text: #1f2937;
+            --font-size-base: 16px;
+            --bubble-radius: 1rem;
+        }
+
+        /* Dark Theme Variables */
+        .theme-dark {
+            --color-primary: #3b82f6;
+            --color-primary-hover: #60a5fa;
+            --color-bg: #111827;
+            --color-surface: #1f2937;
+            --color-text: #f9fafb;
+            --color-border: #374151;
+            --color-bubble-self: #2563eb;
+            --color-bubble-self-text: #ffffff;
+            --color-bubble-other: #374151;
+            --color-bubble-other-text: #f9fafb;
+        }
+
+        /* Cyberpunk Theme */
+        .theme-cyberpunk {
+            --color-primary: #ec4899;
+            --color-primary-hover: #f43f5e;
+            --color-bg: #0f172a;
+            --color-surface: #1e1b4b;
+            --color-text: #22d3ee;
+            --color-border: #818cf8;
+            --color-bubble-self: #db2777;
+            --color-bubble-self-text: #ffffff;
+            --color-bubble-other: #312e81;
+            --color-bubble-other-text: #38bdf8;
+        }
+
+        /* Nordic / Warm Theme */
+        .theme-nordic {
+            --color-primary: #0d9488;
+            --color-primary-hover: #0f766e;
+            --color-bg: #fbfbfe;
+            --color-surface: #f3f0e6;
+            --color-text: #2d3748;
+            --color-border: #e2e8f0;
+            --color-bubble-self: #0d9488;
+            --color-bubble-self-text: #ffffff;
+            --color-bubble-other: #e2e8f0;
+            --color-bubble-other-text: #2d3748;
+        }
+
+        /* High Contrast Theme (Accessibility focused) */
+        .theme-high-contrast {
+            --color-primary: #ffff00;
+            --color-primary-hover: #ffd700;
+            --color-bg: #000000;
+            --color-surface: #000000;
+            --color-text: #ffffff;
+            --color-border: #ffffff;
+            --color-bubble-self: #ffffff;
+            --color-bubble-self-text: #000000;
+            --color-bubble-other: #333333;
+            --color-bubble-other-text: #ffffff;
+        }
+
+        body {
+            font-size: var(--font-size-base);
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        /* Focus rings for keyboard navigation accessibility */
+        a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+            outline: 3px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+
+        .chat-bubble {
+            border-radius: var(--bubble-radius);
+        }
+
+        .chat-bubble-self {
+            background-color: var(--color-bubble-self);
+            color: var(--color-bubble-self-text);
+        }
+
+        .chat-bubble-other {
+            background-color: var(--color-bubble-other);
+            color: var(--color-bubble-other-text);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.5);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(107, 114, 128, 0.8);
+        }
+
+        /* Custom highlight flash animation */
+        @keyframes highlightMessage {
+            0% { background-color: rgba(251, 191, 36, 0.4); }
+            100% { background-color: transparent; }
+        }
+        .highlight-flash {
+            animation: highlightMessage 1.5s ease-out;
+        }
+    </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.inset-0{inset:0px}.right-4{right:1rem}.top-4{top:1rem}.z-10{z-index:10}.z-50{z-index:50}.col-span-2{grid-column:span 2 / span 2}.mx-auto{margin-left:auto;margin-right:auto}.my-6{margin-top:1.5rem;margin-bottom:1.5rem}.my-4{margin-top:1rem;margin-bottom:1rem}.mb-1{margin-bottom:0.25rem}.mb-2{margin-bottom:0.5rem}.mb-2\.5{margin-bottom:0.625rem}.mb-3{margin-bottom:0.75rem}.mb-4{margin-bottom:1rem}.mb-5{margin-bottom:1.25rem}.mr-1{margin-right:0.25rem}.mr-2{margin-right:0.5rem}.mt-2{margin-top:0.5rem}.block{display:block}.inline-block{display:inline-block}.flex{display:flex}.grid{display:grid}.hidden{display:none}.h-10{height:2.5rem}.h-12{height:3rem}.h-2{height:0.5rem}.h-20{height:5rem}.h-4{height:1rem}.h-6{height:1.5rem}.h-7{height:1.75rem}.h-full{height:100%}.max-h-32{max-height:8rem}.max-h-\[90vh\]{max-height:90vh}.max-h-full{max-height:100%}.min-h-\[210px\]{min-height:210px}.w-10{width:2.5rem}.w-12{width:3rem}.w-2{width:0.5rem}.w-20{width:5rem}.w-24{width:6rem}.w-4{width:1rem}.w-6{width:1.5rem}.w-7{width:1.75rem}.w-full{width:100%}.min-w-\[210px\]{min-width:210px}.max-w-6xl{max-width:72rem}.max-w-full{max-width:100%}.max-w-md{max-width:28rem}.max-w-sm{max-width:24rem}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}.cursor-pointer{cursor:pointer}.cursor-zoom-out{cursor:zoom-out}.resize-none{resize:none}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.flex-col{flex-direction:column}.items-end{align-items:flex-end}.items-center{align-items:center}.justify-end{justify-content:flex-end}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1{gap:0.25rem}.gap-1\.5{gap:0.375rem}.gap-2{gap:0.5rem}.gap-3{gap:0.75rem}.space-y-1\.5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.375rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.375rem * var(--tw-space-y-reverse))}.space-y-2 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.5rem * var(--tw-space-y-reverse))}.space-y-2\.5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.625rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.625rem * var(--tw-space-y-reverse))}.space-y-3 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.75rem * var(--tw-space-y-reverse))}.space-y-4 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.space-y-5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.25rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.25rem * var(--tw-space-y-reverse))}.overflow-hidden{overflow:hidden}.overflow-y-auto{overflow-y:auto}.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rounded{border-radius:0.25rem}.rounded-2xl{border-radius:1rem}.rounded-3xl{border-radius:1.5rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-md{border-radius:0.375rem}.rounded-xl{border-radius:0.75rem}.border{border-width:1px}.border-2{border-width:2px}.border-x{border-left-width:1px;border-right-width:1px}.border-b{border-bottom-width:1px}.border-t{border-top-width:1px}.border-amber-200{--tw-border-opacity:1;border-color:rgb(253 230 138 / var(--tw-border-opacity, 1))}.border-blue-200{--tw-border-opacity:1;border-color:rgb(191 219 254 / var(--tw-border-opacity, 1))}.border-gray-200{--tw-border-opacity:1;border-color:rgb(229 231 235 / var(--tw-border-opacity, 1))}.border-gray-300{--tw-border-opacity:1;border-color:rgb(209 213 219 / var(--tw-border-opacity, 1))}.border-gray-700{--tw-border-opacity:1;border-color:rgb(55 65 81 / var(--tw-border-opacity, 1))}.border-indigo-500{--tw-border-opacity:1;border-color:rgb(99 102 241 / var(--tw-border-opacity, 1))}.border-red-200{--tw-border-opacity:1;border-color:rgb(254 202 202 / var(--tw-border-opacity, 1))}.border-teal-200{--tw-border-opacity:1;border-color:rgb(153 246 228 / var(--tw-border-opacity, 1))}.border-theme-border{border-color:var(--color-border)}.border-theme-primary{border-color:var(--color-primary)}.border-white{--tw-border-opacity:1;border-color:rgb(255 255 255 / var(--tw-border-opacity, 1))}.bg-\[\#f3f0e6\]{--tw-bg-opacity:1;background-color:rgb(243 240 230 / var(--tw-bg-opacity, 1))}.bg-amber-50{--tw-bg-opacity:1;background-color:rgb(255 251 235 / var(--tw-bg-opacity, 1))}.bg-black{--tw-bg-opacity:1;background-color:rgb(0 0 0 / var(--tw-bg-opacity, 1))}.bg-black\/60{background-color:rgb(0 0 0 / 0.6)}.bg-black\/90{background-color:rgb(0 0 0 / 0.9)}.bg-blue-100{--tw-bg-opacity:1;background-color:rgb(219 234 254 / var(--tw-bg-opacity, 1))}.bg-blue-50{--tw-bg-opacity:1;background-color:rgb(239 246 255 / var(--tw-bg-opacity, 1))}.bg-blue-500{--tw-bg-opacity:1;background-color:rgb(59 130 246 / var(--tw-bg-opacity, 1))}.bg-blue-600{--tw-bg-opacity:1;background-color:rgb(37 99 235 / var(--tw-bg-opacity, 1))}.bg-gray-100{--tw-bg-opacity:1;background-color:rgb(243 244 246 / var(--tw-bg-opacity, 1))}.bg-gray-200{--tw-bg-opacity:1;background-color:rgb(229 231 235 / var(--tw-bg-opacity, 1))}.bg-gray-400{--tw-bg-opacity:1;background-color:rgb(156 163 175 / var(--tw-bg-opacity, 1))}.bg-gray-50{--tw-bg-opacity:1;background-color:rgb(249 250 251 / var(--tw-bg-opacity, 1))}.bg-gray-700{--tw-bg-opacity:1;background-color:rgb(55 65 81 / var(--tw-bg-opacity, 1))}.bg-gray-900{--tw-bg-opacity:1;background-color:rgb(17 24 39 / var(--tw-bg-opacity, 1))}.bg-green-500{--tw-bg-opacity:1;background-color:rgb(34 197 94 / var(--tw-bg-opacity, 1))}.bg-pink-500{--tw-bg-opacity:1;background-color:rgb(236 72 153 / var(--tw-bg-opacity, 1))}.bg-red-100{--tw-bg-opacity:1;background-color:rgb(254 226 226 / var(--tw-bg-opacity, 1))}.bg-red-50{--tw-bg-opacity:1;background-color:rgb(254 242 242 / var(--tw-bg-opacity, 1))}.bg-red-600{--tw-bg-opacity:1;background-color:rgb(220 38 38 / var(--tw-bg-opacity, 1))}.bg-slate-900{--tw-bg-opacity:1;background-color:rgb(15 23 42 / var(--tw-bg-opacity, 1))}.bg-teal-600{--tw-bg-opacity:1;background-color:rgb(13 148 136 / var(--tw-bg-opacity, 1))}.bg-theme-bg{background-color:var(--color-bg)}.bg-theme-primary{background-color:var(--color-primary)}.bg-theme-surface{background-color:var(--color-surface)}.bg-transparent{background-color:transparent}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.bg-yellow-300{--tw-bg-opacity:1;background-color:rgb(253 224 71 / var(--tw-bg-opacity, 1))}.bg-amber-100{--tw-bg-opacity:1;background-color:rgb(254 243 199 / var(--tw-bg-opacity, 1))}.bg-green-100{--tw-bg-opacity:1;background-color:rgb(220 252 231 / var(--tw-bg-opacity, 1))}.bg-opacity-30{--tw-bg-opacity:0.3}.object-contain{object-fit:contain}.object-cover{object-fit:cover}.p-0{padding:0px}.p-1{padding:0.25rem}.p-1\.5{padding:0.375rem}.p-2{padding:0.5rem}.p-2\.5{padding:0.625rem}.p-3{padding:0.75rem}.p-3\.5{padding:0.875rem}.p-4{padding:1rem}.p-6{padding:1.5rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.py-0\.5{padding-top:0.125rem;padding-bottom:0.125rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-2\.5{padding-top:0.625rem;padding-bottom:0.625rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.pt-2{padding-top:0.5rem}.pt-3{padding-top:0.75rem}.text-left{text-align:left}.text-center{text-align:center}.font-mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}.font-sans{font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"}.text-2xl{font-size:1.5rem;line-height:2rem}.text-\[10px\]{font-size:10px}.text-\[11px\]{font-size:11px}.text-base{font-size:1rem;line-height:1.5rem}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-bold{font-weight:700}.font-medium{font-weight:500}.font-normal{font-weight:400}.uppercase{text-transform:uppercase}.leading-normal{line-height:1.5}.leading-relaxed{line-height:1.625}.leading-tight{line-height:1.25}.text-amber-800{--tw-text-opacity:1;color:rgb(146 64 14 / var(--tw-text-opacity, 1))}.text-blue-500{--tw-text-opacity:1;color:rgb(59 130 246 / var(--tw-text-opacity, 1))}.text-blue-600{--tw-text-opacity:1;color:rgb(37 99 235 / var(--tw-text-opacity, 1))}.text-blue-700{--tw-text-opacity:1;color:rgb(29 78 216 / var(--tw-text-opacity, 1))}.text-blue-800{--tw-text-opacity:1;color:rgb(30 64 175 / var(--tw-text-opacity, 1))}.text-cyan-400{--tw-text-opacity:1;color:rgb(34 211 238 / var(--tw-text-opacity, 1))}.text-gray-400{--tw-text-opacity:1;color:rgb(156 163 175 / var(--tw-text-opacity, 1))}.text-gray-500{--tw-text-opacity:1;color:rgb(107 114 128 / var(--tw-text-opacity, 1))}.text-gray-600{--tw-text-opacity:1;color:rgb(75 85 99 / var(--tw-text-opacity, 1))}.text-gray-800{--tw-text-opacity:1;color:rgb(31 41 55 / var(--tw-text-opacity, 1))}.text-gray-900{--tw-text-opacity:1;color:rgb(17 24 39 / var(--tw-text-opacity, 1))}.text-green-500{--tw-text-opacity:1;color:rgb(34 197 94 / var(--tw-text-opacity, 1))}.text-red-600{--tw-text-opacity:1;color:rgb(220 38 38 / var(--tw-text-opacity, 1))}.text-theme-text{color:var(--color-text)}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.text-yellow-300{--tw-text-opacity:1;color:rgb(253 224 71 / var(--tw-text-opacity, 1))}.text-amber-700{--tw-text-opacity:1;color:rgb(180 83 9 / var(--tw-text-opacity, 1))}.text-green-700{--tw-text-opacity:1;color:rgb(21 128 61 / var(--tw-text-opacity, 1))}.antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-inner{--tw-shadow:inset 0 2px 4px 0 rgb(0 0 0 / 0.05);--tw-shadow-colored:inset 0 2px 4px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-sm{--tw-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.ring-blue-500{--tw-ring-opacity:1;--tw-ring-color:rgb(59 130 246 / var(--tw-ring-opacity, 1))}.ring-pink-500{--tw-ring-opacity:1;--tw-ring-color:rgb(236 72 153 / var(--tw-ring-opacity, 1))}.ring-teal-500{--tw-ring-opacity:1;--tw-ring-color:rgb(20 184 166 / var(--tw-ring-opacity, 1))}.ring-yellow-400{--tw-ring-opacity:1;--tw-ring-color:rgb(250 204 21 / var(--tw-ring-opacity, 1))}.backdrop-blur-sm{--tw-backdrop-blur:blur(4px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.selection\:bg-blue-500 *::selection{--tw-bg-opacity:1;background-color:rgb(59 130 246 / var(--tw-bg-opacity, 1))}.selection\:text-white *::selection{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.selection\:bg-blue-500::selection{--tw-bg-opacity:1;background-color:rgb(59 130 246 / var(--tw-bg-opacity, 1))}.selection\:text-white::selection{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.hover\:bg-gray-100:hover{--tw-bg-opacity:1;background-color:rgb(243 244 246 / var(--tw-bg-opacity, 1))}.hover\:bg-gray-200:hover{--tw-bg-opacity:1;background-color:rgb(229 231 235 / var(--tw-bg-opacity, 1))}.hover\:bg-gray-300:hover{--tw-bg-opacity:1;background-color:rgb(209 213 219 / var(--tw-bg-opacity, 1))}.hover\:bg-gray-800:hover{--tw-bg-opacity:1;background-color:rgb(31 41 55 / var(--tw-bg-opacity, 1))}.hover\:bg-red-100:hover{--tw-bg-opacity:1;background-color:rgb(254 226 226 / var(--tw-bg-opacity, 1))}.hover\:bg-red-200:hover{--tw-bg-opacity:1;background-color:rgb(254 202 202 / var(--tw-bg-opacity, 1))}.hover\:bg-red-700:hover{--tw-bg-opacity:1;background-color:rgb(185 28 28 / var(--tw-bg-opacity, 1))}.hover\:bg-theme-primary-hover:hover{background-color:var(--color-primary-hover)}.hover\:text-gray-600:hover{--tw-text-opacity:1;color:rgb(75 85 99 / var(--tw-text-opacity, 1))}.hover\:underline:hover{-webkit-text-decoration-line:underline;text-decoration-line:underline}.hover\:ring-2:hover{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000)}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.dark\:border-amber-800:is(.dark *){--tw-border-opacity:1;border-color:rgb(146 64 14 / var(--tw-border-opacity, 1))}.dark\:border-blue-800:is(.dark *){--tw-border-opacity:1;border-color:rgb(30 64 175 / var(--tw-border-opacity, 1))}.dark\:border-red-800:is(.dark *){--tw-border-opacity:1;border-color:rgb(153 27 27 / var(--tw-border-opacity, 1))}.dark\:bg-amber-950\/40:is(.dark *){background-color:rgb(69 26 3 / 0.4)}.dark\:bg-blue-900:is(.dark *){--tw-bg-opacity:1;background-color:rgb(30 58 138 / var(--tw-bg-opacity, 1))}.dark\:bg-blue-950\/40:is(.dark *){background-color:rgb(23 37 84 / 0.4)}.dark\:bg-gray-700:is(.dark *){--tw-bg-opacity:1;background-color:rgb(55 65 81 / var(--tw-bg-opacity, 1))}.dark\:bg-gray-800:is(.dark *){--tw-bg-opacity:1;background-color:rgb(31 41 55 / var(--tw-bg-opacity, 1))}.dark\:bg-gray-900:is(.dark *){--tw-bg-opacity:1;background-color:rgb(17 24 39 / var(--tw-bg-opacity, 1))}.dark\:bg-red-950\/30:is(.dark *){background-color:rgb(69 10 10 / 0.3)}.dark\:bg-green-900:is(.dark *){--tw-bg-opacity:1;background-color:rgb(20 83 45 / var(--tw-bg-opacity, 1))}.dark\:text-amber-200:is(.dark *){--tw-text-opacity:1;color:rgb(253 230 138 / var(--tw-text-opacity, 1))}.dark\:text-blue-200:is(.dark *){--tw-text-opacity:1;color:rgb(191 219 254 / var(--tw-text-opacity, 1))}.dark\:text-blue-300:is(.dark *){--tw-text-opacity:1;color:rgb(147 197 253 / var(--tw-text-opacity, 1))}.dark\:text-blue-400:is(.dark *){--tw-text-opacity:1;color:rgb(96 165 250 / var(--tw-text-opacity, 1))}.dark\:text-gray-300:is(.dark *){--tw-text-opacity:1;color:rgb(209 213 219 / var(--tw-text-opacity, 1))}.dark\:text-gray-400:is(.dark *){--tw-text-opacity:1;color:rgb(156 163 175 / var(--tw-text-opacity, 1))}.dark\:text-green-200:is(.dark *){--tw-text-opacity:1;color:rgb(187 247 208 / var(--tw-text-opacity, 1))}.dark\:hover\:bg-gray-700:hover:is(.dark *){--tw-bg-opacity:1;background-color:rgb(55 65 81 / var(--tw-bg-opacity, 1))}.dark\:hover\:bg-gray-800:hover:is(.dark *){--tw-bg-opacity:1;background-color:rgb(31 41 55 / var(--tw-bg-opacity, 1))}.dark\:hover\:bg-red-900\/50:hover:is(.dark *){background-color:rgb(127 29 29 / 0.5)}@media (min-width: 640px){.sm\:gap-2{gap:0.5rem}.sm\:p-4{padding:1rem}.sm\:text-base{font-size:1rem;line-height:1.5rem}}@media (min-width: 768px){.md\:inline{display:inline}}</style></head>
+<body class="h-full flex flex-col font-sans antialiased selection:bg-blue-500 selection:text-white">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none" aria-live="polite"></div>
+
+    <!-- Main Container -->
+    <div class="h-full max-w-6xl w-full mx-auto flex flex-col shadow-2xl overflow-hidden bg-theme-surface border-x border-theme-border">
+        
+        <!-- HEADER -->
+        <header class="p-3 sm:p-4 bg-theme-surface border-b border-theme-border flex items-center justify-between z-10">
+            <div class="flex items-center gap-3 overflow-hidden">
+                <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-md">
+                    <i class="fa-solid fa-comments"></i>
+                </div>
+                <div class="truncate">
+                    <h1 class="font-bold text-lg leading-tight truncate flex items-center gap-2">
+                        LinkChat
+                        <span id="room-tag" class="text-xs font-normal px-2 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full">#xhs0vz</span>
+                    </h1>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
+                        <span id="header-user-status">オンライン</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Header Action Buttons -->
+            <div class="flex items-center gap-1 sm:gap-2 shrink-0">
+                <button id="btn-share-qr" class="p-2.5 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center gap-1.5" title="QRコード &amp; リンク共有" aria-label="QRコードとリンクの共有">
+                    <i class="fa-solid fa-qrcode text-base"></i>
+                    <span class="hidden md:inline">共有</span>
+                </button>
+                <button id="btn-profile-modal" class="p-2.5 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center gap-1.5" title="プロフィール設定" aria-label="プロフィール設定">
+                    <img id="header-avatar" src="" alt="Avatar" class="w-6 h-6 rounded-full object-cover hidden">
+                    <span id="header-avatar-initial" class="w-6 h-6 rounded-full bg-gray-400 text-white text-xs flex items-center justify-center font-bold">匿</span>
+                    <span class="hidden md:inline" id="header-username">匿名ユーザー</span>
+                </button>
+                <button id="btn-theme-modal" class="p-2.5 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" title="テーマ設定" aria-label="テーマカスタマイズ設定">
+                    <i class="fa-solid fa-palette text-base"></i>
+                </button>
+                <button id="btn-data-modal" class="p-2.5 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition" title="設定・履歴操作" aria-label="チャット履歴の保存・管理">
+                    <i class="fa-solid fa-gear text-base"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- CHAT MESSAGES AREA -->
+        <main id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-opacity-30 bg-gray-50 dark:bg-gray-900" role="log" aria-label="メッセージ履歴"></main>
+
+        <!-- REPLIED MESSAGE PREVIEW BAR -->
+        <div id="reply-preview-bar" class="hidden px-4 py-2 bg-gray-100 dark:bg-gray-800 border-t border-theme-border flex items-center justify-between">
+            <div class="flex items-center gap-2 overflow-hidden text-sm">
+                <i class="fa-solid fa-reply text-blue-500 shrink-0"></i>
+                <div class="truncate">
+                    <span id="reply-target-name" class="font-bold text-xs text-blue-600 dark:text-blue-400"></span>
+                    <p id="reply-target-text" class="text-xs text-gray-600 dark:text-gray-300 truncate"></p>
+                </div>
+            </div>
+            <button type="button" id="btn-cancel-reply" class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg" aria-label="返信をキャンセル">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- IMAGE ATTACHMENT PREVIEW BAR -->
+        <div id="image-preview-bar" class="hidden px-4 py-2 bg-gray-100 dark:bg-gray-800 border-t border-theme-border flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <img id="image-preview-thumb" src="" alt="添付プレビュー" class="w-12 h-12 rounded-lg object-cover border border-theme-border">
+                <span class="text-xs text-gray-600 dark:text-gray-300">画像を添付中...</span>
+            </div>
+            <button type="button" id="btn-cancel-image" class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg" aria-label="添付画像を削除">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- MESSAGE INPUT FOOTER -->
+        <footer class="p-3 bg-theme-surface border-t border-theme-border">
+            <form id="chat-form" class="flex items-end gap-2">
+                <input type="file" id="image-input" accept="image/*" class="hidden">
+                <button type="button" id="btn-attach-image" class="p-3 rounded-xl bg-theme-bg hover:bg-gray-200 dark:hover:bg-gray-700 text-theme-text border border-theme-border transition shrink-0" title="画像を添付" aria-label="画像を添付">
+                    <i class="fa-regular fa-image text-lg"></i>
+                </button>
+                <textarea id="message-input" rows="1" placeholder="メッセージを入力 (Enterで送信 / Shift+Enterで改行)" class="flex-1 p-3 rounded-xl border border-theme-border bg-theme-bg text-theme-text text-sm sm:text-base resize-none focus:outline-none max-h-32 leading-normal"></textarea>
+                <button type="submit" class="p-3 px-4 rounded-xl bg-theme-primary hover:bg-theme-primary-hover text-white font-bold shadow-md transition shrink-0 flex items-center justify-center" aria-label="送信">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+        </footer>
+    </div>
+
+    <!-- MODAL: THEME CUSTOMIZER -->
+    <div id="modal-theme" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true" aria-labelledby="theme-modal-title">
+        <div class="bg-theme-surface border border-theme-border rounded-2xl max-w-md w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button class="btn-close-modal absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600" aria-label="閉じる"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h2 id="theme-modal-title" class="text-xl font-bold mb-4">テーマとアクセシビリティ設定</h2>
+
+            <div class="space-y-5">
+                <!-- Theme Presets -->
+                <div>
+                    <label class="block text-xs font-bold mb-2">カラーテーマ</label>
+                    <div class="grid grid-cols-2 gap-2 text-xs font-bold">
+                        <button type="button" data-theme="light" class="btn-select-theme p-3 rounded-xl border border-gray-300 bg-white text-gray-900 flex items-center gap-2 hover:ring-2 ring-blue-500">
+                            <span class="w-4 h-4 rounded-full bg-blue-500"></span> ライト
+                        </button>
+                        <button type="button" data-theme="dark" class="btn-select-theme p-3 rounded-xl border border-gray-700 bg-gray-900 text-white flex items-center gap-2 hover:ring-2 ring-blue-500">
+                            <span class="w-4 h-4 rounded-full bg-blue-500"></span> ダーク
+                        </button>
+                        <button type="button" data-theme="cyberpunk" class="btn-select-theme p-3 rounded-xl border border-indigo-500 bg-slate-900 text-cyan-400 flex items-center gap-2 hover:ring-2 ring-pink-500">
+                            <span class="w-4 h-4 rounded-full bg-pink-500"></span> サイバーパンク
+                        </button>
+                        <button type="button" data-theme="nordic" class="btn-select-theme p-3 rounded-xl border border-teal-200 bg-[#f3f0e6] text-gray-800 flex items-center gap-2 hover:ring-2 ring-teal-500">
+                            <span class="w-4 h-4 rounded-full bg-teal-600"></span> 北欧ナチュラル
+                        </button>
+                        <button type="button" data-theme="high-contrast" class="btn-select-theme col-span-2 p-3 rounded-xl border-2 border-white bg-black text-yellow-300 flex items-center gap-2 hover:ring-2 ring-yellow-400">
+                            <span class="w-4 h-4 rounded-full bg-yellow-300"></span> ハイコントラスト (視覚サポート)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Font Size -->
+                <div>
+                    <label class="block text-xs font-bold mb-2">文字サイズ</label>
+                    <div class="grid grid-cols-3 gap-2 text-xs font-bold">
+                        <button type="button" data-size="14px" class="btn-font-size p-2.5 rounded-xl border border-theme-border bg-theme-bg hover:bg-gray-200 dark:hover:bg-gray-700">小 (14px)</button>
+                        <button type="button" data-size="16px" class="btn-font-size p-2.5 rounded-xl border border-theme-border bg-theme-bg hover:bg-gray-200 dark:hover:bg-gray-700">標準 (16px)</button>
+                        <button type="button" data-size="19px" class="btn-font-size p-2.5 rounded-xl border border-theme-border bg-theme-bg hover:bg-gray-200 dark:hover:bg-gray-700">大 (19px)</button>
+                    </div>
+                </div>
+
+                <!-- Bubble Corner Style -->
+                <div>
+                    <label class="block text-xs font-bold mb-2">吹き出しの形状</label>
+                    <div class="grid grid-cols-3 gap-2 text-xs font-bold">
+                        <button type="button" data-radius="0.25rem" class="btn-bubble-style p-2.5 rounded border border-theme-border bg-theme-bg hover:bg-gray-200 dark:hover:bg-gray-700">シャープ</button>
+                        <button type="button" data-radius="1rem" class="btn-bubble-style p-2.5 rounded-xl border border-theme-border bg-theme-bg hover:bg-gray-200 dark:hover:bg-gray-700">標準</button>
+                        <button type="button" data-radius="1.5rem" class="btn-bubble-style p-2.5 rounded-3xl border border-theme-border bg-theme-bg hover:bg-gray-200 dark:hover:bg-gray-700">丸み</button>
+                    </div>
+                </div>
+
+                <!-- Fine-grained Custom Color Codes (Local Storage Only) -->
+                <div class="pt-3 border-t border-theme-border">
+                    <div class="flex items-center justify-between mb-2.5">
+                        <label class="text-xs font-bold">カラーコード個別設定 <span class="font-normal text-[11px] text-gray-500">(ローカル保存)</span></label>
+                        <button type="button" id="btn-reset-custom-colors" class="text-[11px] text-blue-500 hover:underline font-medium">
+                            標準色に戻す
+                        </button>
+                    </div>
+                    <div class="space-y-2.5 text-xs">
+                        <!-- Base Background -->
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-medium">ベース (背景)</span>
+                            <div class="flex items-center gap-1.5">
+                                <input type="color" id="picker-color-bg" class="w-7 h-7 rounded cursor-pointer border border-theme-border bg-transparent p-0">
+                                <input type="text" id="hex-color-bg" maxlength="7" placeholder="#f3f4f6" class="w-24 px-2 py-1 rounded border border-theme-border bg-theme-bg text-theme-text font-mono text-xs uppercase focus:outline-none">
+                            </div>
+                        </div>
+                        <!-- Surface Background -->
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-medium">サーフェス (カード・枠)</span>
+                            <div class="flex items-center gap-1.5">
+                                <input type="color" id="picker-color-surface" class="w-7 h-7 rounded cursor-pointer border border-theme-border bg-transparent p-0">
+                                <input type="text" id="hex-color-surface" maxlength="7" placeholder="#ffffff" class="w-24 px-2 py-1 rounded border border-theme-border bg-theme-bg text-theme-text font-mono text-xs uppercase focus:outline-none">
+                            </div>
+                        </div>
+                        <!-- Accent Color -->
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-medium">アクセント (ボタン等)</span>
+                            <div class="flex items-center gap-1.5">
+                                <input type="color" id="picker-color-primary" class="w-7 h-7 rounded cursor-pointer border border-theme-border bg-transparent p-0">
+                                <input type="text" id="hex-color-primary" maxlength="7" placeholder="#3b82f6" class="w-24 px-2 py-1 rounded border border-theme-border bg-theme-bg text-theme-text font-mono text-xs uppercase focus:outline-none">
+                            </div>
+                        </div>
+                        <!-- Text Color -->
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-medium">メイン文字色</span>
+                            <div class="flex items-center gap-1.5">
+                                <input type="color" id="picker-color-text" class="w-7 h-7 rounded cursor-pointer border border-theme-border bg-transparent p-0">
+                                <input type="text" id="hex-color-text" maxlength="7" placeholder="#1f2937" class="w-24 px-2 py-1 rounded border border-theme-border bg-theme-bg text-theme-text font-mono text-xs uppercase focus:outline-none">
+                            </div>
+                        </div>
+                        <!-- Self Bubble Color -->
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-medium">自分の吹き出し色</span>
+                            <div class="flex items-center gap-1.5">
+                                <input type="color" id="picker-color-bubbleSelf" class="w-7 h-7 rounded cursor-pointer border border-theme-border bg-transparent p-0">
+                                <input type="text" id="hex-color-bubbleSelf" maxlength="7" placeholder="#3b82f6" class="w-24 px-2 py-1 rounded border border-theme-border bg-theme-bg text-theme-text font-mono text-xs uppercase focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: PROFILE SETTINGS -->
+    <div id="modal-profile" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title">
+        <div class="bg-theme-surface border border-theme-border rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <button class="btn-close-modal absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600" aria-label="閉じる"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h2 id="profile-modal-title" class="text-xl font-bold mb-4">プロフィール設定</h2>
+
+            <form id="profile-form" class="space-y-4">
+                <!-- Avatar Preview & Options -->
+                <div class="flex flex-col items-center gap-3">
+                    <div class="relative">
+                        <img id="profile-avatar-preview" src="" class="w-20 h-20 rounded-full object-cover border-2 border-theme-primary hidden">
+                        <div id="profile-avatar-initial-preview" class="w-20 h-20 rounded-full bg-blue-600 text-white font-bold text-2xl flex items-center justify-center">U</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <label class="px-3 py-1.5 bg-theme-bg hover:bg-gray-300 dark:hover:bg-gray-700 text-xs rounded-lg cursor-pointer border border-theme-border">
+                            <i class="fa-solid fa-upload mr-1"></i> 画像変更
+                            <input type="file" id="profile-avatar-input" accept="image/*" class="hidden">
+                        </label>
+                        <button type="button" id="btn-remove-avatar" class="px-3 py-1.5 bg-red-100 text-red-600 hover:bg-red-200 text-xs rounded-lg border border-red-200">
+                            リセット
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Display Name -->
+                <div>
+                    <label for="profile-name-input" class="block text-xs font-bold mb-1">表示名</label>
+                    <input type="text" id="profile-name-input" max="25" required="" class="w-full p-2.5 rounded-lg border border-theme-border bg-theme-bg text-theme-text text-sm focus:outline-none">
+                </div>
+
+                <!-- Status Message -->
+                <div>
+                    <label for="profile-status-input" class="block text-xs font-bold mb-1">ステータスメッセージ</label>
+                    <input type="text" id="profile-status-input" max="40" placeholder="例: 作業中 / 離席中" class="w-full p-2.5 rounded-lg border border-theme-border bg-theme-bg text-theme-text text-sm focus:outline-none">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="submit" class="px-4 py-2 bg-theme-primary text-white text-sm font-bold rounded-lg hover:bg-theme-primary-hover transition">
+                        保存する
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: QR CODE & SHARE -->
+    <div id="modal-share" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true" aria-labelledby="share-modal-title">
+        <div class="bg-theme-surface border border-theme-border rounded-2xl max-w-md w-full p-6 shadow-2xl flex flex-col items-center text-center relative max-h-[90vh] overflow-y-auto">
+            <button class="btn-close-modal absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600" aria-label="閉じる"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h2 id="share-modal-title" class="text-xl font-bold mb-1">ルームへの招待</h2>
+            <p class="text-xs text-gray-500 mb-3">ファイルを持っていない相手でも、QRコードを読み取るだけで即座にアプリを開いて参加できます</p>
+
+            <!-- Share Mode Tabs -->
+            <div class="w-full grid grid-cols-2 gap-1 p-1 bg-theme-bg rounded-xl border border-theme-border mb-4 text-xs font-bold">
+                <button type="button" id="tab-share-url" class="py-2 px-3 rounded-lg bg-theme-primary text-white transition shadow-sm">
+                    <i class="fa-solid fa-qrcode mr-1"></i> QR・URL共有
+                </button>
+                <button type="button" id="tab-share-file" class="py-2 px-3 rounded-lg text-theme-text hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    <i class="fa-solid fa-file-arrow-down mr-1"></i> ファイルで渡す
+                </button>
+            </div>
+
+            <!-- Panel 1: QR & URL Share -->
+            <div id="share-panel-url" class="w-full flex flex-col items-center">
+                <!-- QRCode Display Holder -->
+                <div id="qrcode-container" class="bg-white p-4 rounded-xl border border-gray-200 mb-3 shadow-inner flex items-center justify-center min-w-[210px] min-h-[210px]"></div>
+                <p id="qr-mode-desc" class="text-[11px] text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+                    スマホのカメラでQRコードを読み取るか、下のリンクを共有してください。
+                </p>
+
+                <div id="local-warning-box" class="hidden w-full mb-3 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-left text-[11px] text-amber-800 dark:text-amber-200">
+                    <i class="fa-solid fa-circle-info mr-1"></i>
+                    現在ローカル/プレビュー環境で開いています。別のスマホから開く場合は、上の<strong>「ファイルで渡す」</strong>タブから招待用HTMLを送るか、このHTMLをWebサーバー（GitHub Pages等）に公開してください。
+                </div>
+
+                <div class="w-full flex items-center gap-2 bg-theme-bg p-2 rounded-lg border border-theme-border mb-3">
+                    <input type="text" id="share-url-input" readonly="" class="w-full bg-transparent text-xs text-theme-text focus:outline-none truncate">
+                    <button id="btn-copy-link" class="px-3 py-1.5 bg-theme-primary text-white text-xs font-bold rounded-md hover:bg-theme-primary-hover shrink-0 transition flex items-center gap-1">
+                        <i class="fa-solid fa-copy"></i> コピー
+                    </button>
+                </div>
+            </div>
+
+            <!-- Panel 2: Standalone HTML File Export for Other Devices -->
+            <div id="share-panel-file" class="hidden w-full flex flex-col items-center text-left space-y-3 mb-3">
+                <div class="w-full p-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-xs space-y-1.5">
+                    <p class="font-bold text-blue-700 dark:text-blue-300"><i class="fa-solid fa-mobile-screen-button mr-1"></i> スマホ・別PCで確実に開く方法</p>
+                    <p class="text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed">
+                        iPhoneやAndroidはセキュリティ上、QRコードから直接アプリ画面（data URL）を開くことが制限されています。<br>
+                        下のボタンで<strong>このルーム専用のHTMLファイル</strong>を保存し、LINE・メール・Googleドライブ・Nearby Share等で相手に送ると、ファイルを開くだけで即座に同じチャットに参加できます。
+                    </p>
+                </div>
+                <button type="button" id="btn-download-invite-html" class="w-full py-3 px-4 rounded-xl bg-theme-primary hover:bg-theme-primary-hover text-white text-xs font-bold shadow-md transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-download"></i> 招待用HTMLファイルを保存 (Room: <span id="invite-file-room-label"></span>)
+                </button>
+            </div>
+
+            <!-- Room Switcher -->
+            <div class="w-full pt-3 border-t border-theme-border flex items-center gap-2">
+                <input type="text" id="join-room-input" placeholder="別のルームIDを入力して移動..." class="flex-1 px-3 py-2 text-xs rounded-lg border border-theme-border bg-theme-bg text-theme-text focus:outline-none">
+                <button type="button" id="btn-join-room" class="px-3 py-2 bg-gray-700 hover:bg-gray-800 text-white text-xs font-bold rounded-lg transition shrink-0">
+                    移動
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CONFIRMATION DIALOG -->
+    <div id="modal-confirm" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+        <div class="bg-theme-surface border border-theme-border rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center">
+            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-3 text-xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 id="confirm-modal-title" class="text-lg font-bold mb-2">履歴の消去</h3>
+            <p class="text-xs text-gray-500 mb-5">このルームのメッセージ履歴をすべて削除しますか？この操作は取り消せません。</p>
+            <div class="flex gap-2 justify-center">
+                <button type="button" id="btn-confirm-cancel" class="flex-1 py-2.5 rounded-xl border border-theme-border text-sm font-bold hover:bg-gray-100 dark:hover:bg-gray-800 transition">キャンセル</button>
+                <button type="button" id="btn-confirm-ok" class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold transition">削除する</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: DATA & HISTORY SETTINGS -->
+    <div id="modal-data" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true" aria-labelledby="data-modal-title">
+        <div class="bg-theme-surface border border-theme-border rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <button class="btn-close-modal absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600" aria-label="閉じる"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h2 id="data-modal-title" class="text-xl font-bold mb-4">データとバックアップ</h2>
+
+            <div class="space-y-4">
+                <p class="text-xs text-gray-500">チャット履歴はブラウザ内に安全に保存されています。データのエクスポートやインポートが可能です。</p>
+                
+                <div class="flex flex-col gap-2">
+                    <button id="btn-export-chat" class="w-full p-3 bg-theme-bg hover:bg-gray-200 dark:hover:bg-gray-700 border border-theme-border rounded-xl text-left flex items-center justify-between text-sm font-medium transition">
+                        <span><i class="fa-solid fa-download mr-2 text-blue-500"></i> チャット履歴をエクスポート (JSON)</span>
+                        <i class="fa-solid fa-chevron-right text-xs text-gray-400"></i>
+                    </button>
+                    
+                    <label class="w-full p-3 bg-theme-bg hover:bg-gray-200 dark:hover:bg-gray-700 border border-theme-border rounded-xl text-left flex items-center justify-between text-sm font-medium cursor-pointer transition">
+                        <span><i class="fa-solid fa-upload mr-2 text-green-500"></i> チャット履歴をインポート</span>
+                        <input type="file" id="import-chat-input" accept=".json" class="hidden">
+                        <i class="fa-solid fa-chevron-right text-xs text-gray-400"></i>
+                    </label>
+
+                    <!-- Cloud Sync (Firebase) Config for GitHub Pages -->
+                    <div class="p-3.5 bg-theme-bg border border-theme-border rounded-xl space-y-2 mt-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold flex items-center gap-1.5">
+                                <i class="fa-solid fa-cloud text-blue-500"></i> 外部公開用 クラウド同期設定
+                            </span>
+                            <span id="cloud-status-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200 font-bold">オンライン同期中</span>
+                        </div>
+                        <p class="text-[11px] text-gray-500 leading-relaxed">
+                            GitHub Pages等で他の人とリアルタイム通信するには、Firebaseの <code>firebaseConfig</code> (JSON) を貼り付けて保存してください。
+                        </p>
+                        <textarea id="firebase-config-input" rows="3" placeholder="{&quot;apiKey&quot;: &quot;...&quot;, &quot;authDomain&quot;: &quot;...&quot;, &quot;projectId&quot;: &quot;...&quot;}" class="w-full p-2 rounded-lg border border-theme-border bg-theme-surface text-theme-text font-mono text-[11px] focus:outline-none"></textarea>
+                        <div class="flex gap-2">
+                            <button type="button" id="btn-save-firebase-config" class="flex-1 py-2 px-3 bg-theme-primary hover:bg-theme-primary-hover text-white text-xs font-bold rounded-lg transition">
+                                設定を保存して接続
+                            </button>
+                            <button type="button" id="btn-export-github-html" class="py-2 px-3 bg-gray-700 hover:bg-gray-800 text-white text-xs font-bold rounded-lg transition" title="設定入りのindex.htmlを書き出し">
+                                <i class="fa-brands fa-github mr-1"></i> 公開用HTML出力
+                            </button>
+                        </div>
+                    </div>
+
+                    <button id="btn-clear-chat" class="w-full p-3 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950/30 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-800 rounded-xl text-left flex items-center justify-between text-sm font-medium transition mt-2">
+                        <span><i class="fa-solid fa-trash mr-2"></i> このルームのチャット履歴を消去</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LIGHTBOX FOR IMAGE VIEW -->
+    <div id="lightbox" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 hidden cursor-zoom-out">
+        <button id="btn-close-lightbox" class="absolute top-4 right-4 text-white text-2xl p-3" aria-label="拡大画像を閉じる"><i class="fa-solid fa-xmark"></i></button>
+        <img id="lightbox-img" src="" alt="拡大画像" class="max-w-full max-h-full object-contain rounded-lg">
+    </div>
+
+    <!-- JAVASCRIPT APP LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Setup for Cross-Device Sync
+        // GitHub Pages等で直接使う場合は、下の DEFAULT_FIREBASE_CONFIG にご自身の設定を貼り付けてください
+        const DEFAULT_FIREBASE_CONFIG = null;
+
+        let db = null;
+        let auth = null;
+        let firebaseUser = null;
+        const storedFirebaseConfig = localStorage.getItem('linkchat_firebase_config');
+        const rawFirebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config)
+            ? __firebase_config
+            : (window.__EMBEDDED_FIREBASE_CONFIG__ || storedFirebaseConfig || DEFAULT_FIREBASE_CONFIG);
+        const appId = typeof __app_id !== 'undefined'
+            ? __app_id
+            : (window.__EMBEDDED_APP_ID__ || 'linkchat-universal-app');
+
+        try {
+            if (rawFirebaseConfig) {
+                const firebaseConfig = typeof rawFirebaseConfig === 'string' ? JSON.parse(rawFirebaseConfig) : rawFirebaseConfig;
+                const fbApp = initializeApp(firebaseConfig);
+                db = getFirestore(fbApp);
+                auth = getAuth(fbApp);
+            }
+        } catch (e) {
+            console.warn('Cloud sync unavailable, running in local mode:', e);
+        }
+
+        /**
+         * State & Global Configuration
+         */
+        const App = {
+            roomId: '',
+            userId: '',
+            profile: {
+                name: '匿名ユーザー',
+                avatar: '',
+                status: 'オンライン'
+            },
+            theme: {
+                preset: 'light',
+                fontSize: '16px',
+                bubbleRadius: '1rem',
+                customColors: {
+                    bg: '',
+                    surface: '',
+                    primary: '',
+                    text: '',
+                    bubbleSelf: ''
+                }
+            },
+            messages: [],
+            replyTo: null,
+            pendingImage: null,
+            broadcastChannel: null,
+            shareMode: 'url', // 'url' | 'file'
+            unsubscribeCloud: null
+        };
+
+        // DOM Element Selectors
+        const $ = (id) => document.getElementById(id);
+
+        /**
+         * Initialization & Room Setup
+         */
+        async function initApp() {
+            // 1. User ID
+            let storedUid = localStorage.getItem('linkchat_uid');
+            if (!storedUid) {
+                storedUid = 'user_' + Math.random().toString(36).substring(2, 10);
+                localStorage.setItem('linkchat_uid', storedUid);
+            }
+            App.userId = storedUid;
+
+            // 2. Profile & Theme
+            try {
+                const savedProfile = JSON.parse(localStorage.getItem('linkchat_profile'));
+                if (savedProfile) App.profile = { ...App.profile, ...savedProfile };
+            } catch (e) {}
+
+            try {
+                const savedTheme = JSON.parse(localStorage.getItem('linkchat_theme'));
+                if (savedTheme) App.theme = { ...App.theme, ...savedTheme };
+            } catch (e) {}
+
+            applyTheme();
+            renderHeader();
+
+            // 3. Room ID from Embedded config, URL query, or Hash
+            const urlParams = new URLSearchParams(window.location.search);
+            const hashRoom = window.location.hash.replace('#', '');
+            const detectedRoom = window.__EMBEDDED_ROOM_ID__ || urlParams.get('room') || hashRoom;
+
+            if (detectedRoom) {
+                App.roomId = decodeURIComponent(detectedRoom);
+            } else {
+                App.roomId = Math.random().toString(36).substring(2, 8);
+                try {
+                    window.history.replaceState(null, '', `#${App.roomId}`);
+                } catch (e) {
+                    window.location.hash = App.roomId;
+                }
+            }
+            $('room-tag').textContent = `#${App.roomId}`;
+
+            // 4. Bind UI Events immediately so buttons always work
+            setupEventListeners();
+
+            // 5. Load Messages & Start Sync
+            loadMessages();
+            renderMessages();
+            initBroadcastChannel();
+
+            // 6. Firebase Auth & Real-time Cloud Sync
+            updateCloudStatusUI();
+            if (auth && db) {
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    firebaseUser = auth.currentUser;
+                    updateCloudStatusUI(true);
+                    subscribeToRoomMessages();
+                } catch (e) {
+                    console.warn('Cloud auth error:', e);
+                    updateCloudStatusUI(false);
+                }
+            }
+        }
+
+        function updateCloudStatusUI(connected = false) {
+            const badge = $('cloud-status-badge');
+            const input = $('firebase-config-input');
+            if (input && rawFirebaseConfig && !input.value) {
+                input.value = typeof rawFirebaseConfig === 'string' ? rawFirebaseConfig : JSON.stringify(rawFirebaseConfig, null, 2);
+            }
+            if (!badge) return;
+            if (connected) {
+                badge.textContent = 'オンライン同期中';
+                badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200 font-bold';
+            } else if (rawFirebaseConfig) {
+                badge.textContent = '接続待機/エラー';
+                badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold';
+            } else {
+                badge.textContent = 'ローカルのみ';
+                badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-bold';
+            }
+        }
+
+        function downloadGithubPublishHtml() {
+            try {
+                const clone = document.documentElement.cloneNode(true);
+                ['modal-share', 'modal-profile', 'modal-theme', 'modal-data', 'modal-confirm', 'lightbox'].forEach(id => {
+                    const el = clone.querySelector('#' + id);
+                    if (el) el.classList.add('hidden');
+                });
+                const toastContainer = clone.querySelector('#toast-container');
+                if (toastContainer) toastContainer.innerHTML = '';
+                const chatMessages = clone.querySelector('#chat-messages');
+                if (chatMessages) chatMessages.innerHTML = '';
+                const qrContainer = clone.querySelector('#qrcode-container');
+                if (qrContainer) qrContainer.innerHTML = '';
+
+                // Embed Firebase config (without hardcoding a roomId so visitors get fresh rooms or URL rooms)
+                const configScript = document.createElement('script');
+                configScript.textContent = [
+                    `window.__EMBEDDED_APP_ID__=${JSON.stringify(appId)};`,
+                    rawFirebaseConfig ? `window.__EMBEDDED_FIREBASE_CONFIG__=${JSON.stringify(rawFirebaseConfig)};` : ''
+                ].join('');
+                clone.querySelector('head').prepend(configScript);
+
+                const fullHtml = '<!DOCTYPE html>\n' + clone.outerHTML;
+                const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'index.html';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                showToast('GitHub公開用の index.html を保存しました！');
+            } catch (e) {
+                showToast('出力に失敗しました');
+            }
+        }
+
+        function applyTheme() {
+            const root = document.documentElement;
+            root.classList.remove('dark', 'theme-dark', 'theme-cyberpunk', 'theme-nordic', 'theme-high-contrast');
+            if (App.theme.preset === 'dark') {
+                root.classList.add('dark', 'theme-dark');
+            } else if (App.theme.preset === 'cyberpunk') {
+                root.classList.add('dark', 'theme-cyberpunk');
+            } else if (App.theme.preset === 'nordic') {
+                root.classList.add('theme-nordic');
+            } else if (App.theme.preset === 'high-contrast') {
+                root.classList.add('dark', 'theme-high-contrast');
+            }
+            root.style.setProperty('--font-size-base', App.theme.fontSize || '16px');
+            root.style.setProperty('--bubble-radius', App.theme.bubbleRadius || '1rem');
+
+            // Apply fine-grained custom color overrides (stored locally only)
+            const c = App.theme.customColors || {};
+            const varMap = {
+                bg: '--color-bg',
+                surface: '--color-surface',
+                primary: '--color-primary',
+                text: '--color-text',
+                bubbleSelf: '--color-bubble-self'
+            };
+
+            Object.entries(varMap).forEach(([key, cssVar]) => {
+                if (c[key] && /^#[0-9A-Fa-f]{6}$/.test(c[key])) {
+                    root.style.setProperty(cssVar, c[key]);
+                } else {
+                    root.style.removeProperty(cssVar);
+                }
+            });
+
+            if (c.primary && /^#[0-9A-Fa-f]{6}$/.test(c.primary)) {
+                root.style.setProperty('--color-primary-hover', c.primary);
+            } else {
+                root.style.removeProperty('--color-primary-hover');
+            }
+
+            syncColorInputsUI();
+        }
+
+        function syncColorInputsUI() {
+            const computed = getComputedStyle(document.documentElement);
+            const c = App.theme.customColors || {};
+            const fields = [
+                { key: 'bg', cssVar: '--color-bg', fallback: '#f3f4f6' },
+                { key: 'surface', cssVar: '--color-surface', fallback: '#ffffff' },
+                { key: 'primary', cssVar: '--color-primary', fallback: '#3b82f6' },
+                { key: 'text', cssVar: '--color-text', fallback: '#1f2937' },
+                { key: 'bubbleSelf', cssVar: '--color-bubble-self', fallback: '#3b82f6' }
+            ];
+
+            fields.forEach(({ key, cssVar, fallback }) => {
+                const picker = $(`picker-color-${key}`);
+                const hexInput = $(`hex-color-${key}`);
+                if (!picker || !hexInput) return;
+                const activeVal = (c[key] && /^#[0-9A-Fa-f]{6}$/.test(c[key]))
+                    ? c[key]
+                    : (computed.getPropertyValue(cssVar).trim() || fallback);
+                const normalized = /^#[0-9A-Fa-f]{6}$/.test(activeVal) ? activeVal : fallback;
+                picker.value = normalized;
+                hexInput.value = normalized.toUpperCase();
+            });
+        }
+
+        function renderHeader() {
+            $('header-username').textContent = App.profile.name;
+            $('header-user-status').textContent = App.profile.status || 'オンライン';
+            if (App.profile.avatar) {
+                $('header-avatar').src = App.profile.avatar;
+                $('header-avatar').classList.remove('hidden');
+                $('header-avatar-initial').classList.add('hidden');
+            } else {
+                $('header-avatar').classList.add('hidden');
+                $('header-avatar-initial').classList.remove('hidden');
+                $('header-avatar-initial').textContent = (App.profile.name || 'U').charAt(0).toUpperCase();
+            }
+        }
+
+        function loadMessages() {
+            try {
+                const raw = localStorage.getItem(`linkchat_msgs_${App.roomId}`);
+                App.messages = raw ? JSON.parse(raw) : [];
+            } catch (e) {
+                App.messages = [];
+            }
+        }
+
+        function saveMessagesToStorage() {
+            try {
+                localStorage.setItem(`linkchat_msgs_${App.roomId}`, JSON.stringify(App.messages));
+            } catch (e) {
+                console.warn('Local storage quota exceeded:', e);
+            }
+        }
+
+        function initBroadcastChannel() {
+            if (App.broadcastChannel) App.broadcastChannel.close();
+            if (typeof BroadcastChannel === 'undefined') return;
+            App.broadcastChannel = new BroadcastChannel(`linkchat_room_${App.roomId}`);
+            App.broadcastChannel.onmessage = (event) => {
+                const { type, payload } = event.data || {};
+                if (type === 'NEW_MESSAGE' && payload) {
+                    if (!App.messages.some(m => m.id === payload.id)) {
+                        App.messages.push(payload);
+                        App.messages.sort((a, b) => a.timestamp - b.timestamp);
+                        saveMessagesToStorage();
+                        renderMessages();
+                    }
+                } else if (type === 'DELETE_MESSAGE' && payload) {
+                    App.messages = App.messages.filter(m => m.id !== payload);
+                    saveMessagesToStorage();
+                    renderMessages();
+                } else if (type === 'CLEAR_HISTORY') {
+                    App.messages = [];
+                    saveMessagesToStorage();
+                    renderMessages();
+                }
+            };
+        }
+
+        function subscribeToRoomMessages() {
+            if (!db || !firebaseUser || !App.roomId) return;
+            if (App.unsubscribeCloud) {
+                App.unsubscribeCloud();
+                App.unsubscribeCloud = null;
+            }
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', `room_${App.roomId}`);
+            App.unsubscribeCloud = onSnapshot(colRef, (snapshot) => {
+                const cloudMsgs = [];
+                snapshot.forEach(docSnap => {
+                    cloudMsgs.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                if (cloudMsgs.length > 0 || snapshot.metadata.fromCache === false) {
+                    cloudMsgs.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+                    App.messages = cloudMsgs;
+                    saveMessagesToStorage();
+                    renderMessages();
+                }
+            }, (err) => {
+                console.warn('Cloud sync listener error:', err);
+            });
+        }
+
+        async function sendMessage() {
+            const input = $('message-input');
+            const text = input.value.trim();
+            if (!text && !App.pendingImage) return;
+
+            const msg = {
+                id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+                userId: App.userId,
+                userName: App.profile.name,
+                userAvatar: App.profile.avatar || '',
+                text: text,
+                image: App.pendingImage || null,
+                replyTo: App.replyTo ? {
+                    id: App.replyTo.id,
+                    userName: App.replyTo.userName,
+                    text: App.replyTo.text || '[画像]'
+                } : null,
+                timestamp: Date.now()
+            };
+
+            input.value = '';
+            adjustTextareaHeight();
+            cancelReply();
+            cancelImage();
+
+            App.messages.push(msg);
+            saveMessagesToStorage();
+            renderMessages();
+
+            if (App.broadcastChannel) {
+                App.broadcastChannel.postMessage({ type: 'NEW_MESSAGE', payload: msg });
+            }
+
+            if (db && firebaseUser) {
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', `room_${App.roomId}`, msg.id);
+                    await setDoc(docRef, msg);
+                } catch (e) {
+                    console.warn('Cloud send failed:', e);
+                }
+            }
+        }
+
+        window.deleteMessage = async function(messageId) {
+            App.messages = App.messages.filter(m => m.id !== messageId);
+            saveMessagesToStorage();
+            renderMessages();
+
+            if (App.broadcastChannel) {
+                App.broadcastChannel.postMessage({ type: 'DELETE_MESSAGE', payload: messageId });
+            }
+
+            if (db && firebaseUser) {
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', `room_${App.roomId}`, messageId);
+                    await deleteDoc(docRef);
+                } catch (e) {
+                    console.warn('Cloud delete failed:', e);
+                }
+            }
+            showToast('送信を取り消しました');
+        };
+
+        function renderMessages() {
+            const container = $('chat-messages');
+            const noticeHtml = `
+                <div class="text-center my-4">
+                    <span class="text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full">
+                        <i class="fa-solid fa-lock text-xs mr-1"></i> リンクまたはファイルを知っている人と即座にチャットが可能です
+                    </span>
+                </div>
+            `;
+
+            if (App.messages.length === 0) {
+                container.innerHTML = noticeHtml;
+                return;
+            }
+
+            const html = App.messages.map(msg => {
+                const isSelf = msg.userId === App.userId;
+                const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const initial = escapeHtml((msg.userName || 'U').charAt(0).toUpperCase());
+
+                const avatarHtml = msg.userAvatar
+                    ? `<img src="${msg.userAvatar}" alt="" class="w-8 h-8 rounded-full object-cover shrink-0 border border-theme-border">`
+                    : `<div class="w-8 h-8 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0">${initial}</div>`;
+
+                const replyHtml = msg.replyTo ? `
+                    <div onclick="scrollToMessage('${escapeHtml(msg.replyTo.id)}')" class="mb-1.5 p-2 rounded-lg text-xs bg-black/10 dark:bg-white/10 border-l-4 border-current cursor-pointer opacity-90 hover:opacity-100">
+                        <div class="font-bold text-[11px]"><i class="fa-solid fa-reply mr-1"></i>${escapeHtml(msg.replyTo.userName)}</div>
+                        <div class="truncate opacity-80">${escapeHtml(msg.replyTo.text)}</div>
+                    </div>
+                ` : '';
+
+                const imageHtml = msg.image ? `
+                    <img src="${msg.image}" alt="送信画像" onclick="openLightbox('${msg.image}')" class="max-w-full max-h-64 rounded-lg mb-1.5 cursor-zoom-in object-contain border border-black/10">
+                ` : '';
+
+                const textHtml = msg.text ? `<p class="whitespace-pre-wrap break-words leading-relaxed">${escapeHtml(msg.text)}</p>` : '';
+
+                return `
+                    <div id="msg-${escapeHtml(msg.id)}" class="flex items-end gap-2 group ${isSelf ? 'flex-row-reverse' : 'flex-row'}">
+                        ${avatarHtml}
+                        <div class="max-w-[78%] sm:max-w-[68%] flex flex-col ${isSelf ? 'items-end' : 'items-start'}">
+                            <span class="text-[11px] text-gray-500 dark:text-gray-400 mb-1 px-1">${escapeHtml(msg.userName)} • ${timeStr}</span>
+                            <div class="chat-bubble px-3.5 py-2.5 shadow-sm ${isSelf ? 'chat-bubble-self' : 'chat-bubble-other'}">
+                                ${replyHtml}
+                                ${imageHtml}
+                                ${textHtml}
+                            </div>
+                            <div class="flex items-center gap-3 mt-1 px-1 text-[11px] text-gray-500 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                <button type="button" onclick="setReplyTarget('${escapeHtml(msg.id)}')" class="hover:text-blue-500 flex items-center gap-1">
+                                    <i class="fa-solid fa-reply"></i> 返信
+                                </button>
+                                ${isSelf ? `
+                                    <button type="button" onclick="deleteMessage('${escapeHtml(msg.id)}')" class="hover:text-red-500 flex items-center gap-1">
+                                        <i class="fa-solid fa-trash-can"></i> 取り消し
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = noticeHtml + html;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        /**
+         * Generate Self-Contained Invite HTML File for Other Devices
+         */
+        function downloadInviteHtmlFile() {
+            try {
+                const clone = document.documentElement.cloneNode(true);
+                ['modal-share', 'modal-profile', 'modal-theme', 'modal-data', 'modal-confirm', 'lightbox'].forEach(id => {
+                    const el = clone.querySelector('#' + id);
+                    if (el) el.classList.add('hidden');
+                });
+                const toastContainer = clone.querySelector('#toast-container');
+                if (toastContainer) toastContainer.innerHTML = '';
+                const chatMessages = clone.querySelector('#chat-messages');
+                if (chatMessages) chatMessages.innerHTML = '';
+                const qrContainer = clone.querySelector('#qrcode-container');
+                if (qrContainer) qrContainer.innerHTML = '';
+
+                // Inject room ID and cloud config into head so the recipient joins the exact same room
+                const configScript = document.createElement('script');
+                configScript.textContent = [
+                    `window.__EMBEDDED_ROOM_ID__=${JSON.stringify(App.roomId)};`,
+                    `window.__EMBEDDED_APP_ID__=${JSON.stringify(appId)};`,
+                    rawFirebaseConfig ? `window.__EMBEDDED_FIREBASE_CONFIG__=${JSON.stringify(rawFirebaseConfig)};` : ''
+                ].join('');
+                clone.querySelector('head').prepend(configScript);
+
+                const fullHtml = '<!DOCTYPE html>\n' + clone.outerHTML;
+                const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `LinkChat_Room_${App.roomId}.html`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                showToast('招待用HTMLファイルを保存しました！');
+            } catch (e) {
+                console.error('Invite file export error:', e);
+                showToast('ファイルの生成に失敗しました');
+            }
+        }
+
+        function getStandardShareUrl() {
+            const href = window.location.href;
+            if (href.startsWith('http://') || href.startsWith('https://')) {
+                const base = href.split('#')[0].split('?')[0];
+                return `${base}?room=${encodeURIComponent(App.roomId)}#${encodeURIComponent(App.roomId)}`;
+            }
+            return `LinkChat Room: #${App.roomId}`;
+        }
+
+        /**
+         * QRCode & Share Dialog
+         */
+        function renderShareQRCode() {
+            const container = $('qrcode-container');
+            container.innerHTML = '';
+            $('invite-file-room-label').textContent = `#${App.roomId}`;
+
+            const isHttp = window.location.href.startsWith('http://') || window.location.href.startsWith('https://');
+            if (!isHttp) {
+                $('local-warning-box').classList.remove('hidden');
+            } else {
+                $('local-warning-box').classList.add('hidden');
+            }
+
+            if (App.shareMode === 'url') {
+                $('share-panel-url').classList.remove('hidden');
+                $('share-panel-file').classList.add('hidden');
+                $('tab-share-url').className = 'py-2 px-3 rounded-lg bg-theme-primary text-white transition shadow-sm';
+                $('tab-share-file').className = 'py-2 px-3 rounded-lg text-theme-text hover:bg-gray-200 dark:hover:bg-gray-700 transition';
+            } else {
+                $('share-panel-url').classList.add('hidden');
+                $('share-panel-file').classList.remove('hidden');
+                $('tab-share-file').className = 'py-2 px-3 rounded-lg bg-theme-primary text-white transition shadow-sm';
+                $('tab-share-url').className = 'py-2 px-3 rounded-lg text-theme-text hover:bg-gray-200 dark:hover:bg-gray-700 transition';
+            }
+
+            const targetUrl = getStandardShareUrl();
+            $('share-url-input').value = targetUrl;
+
+            try {
+                new QRCode(container, {
+                    text: targetUrl,
+                    width: 190,
+                    height: 190,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            } catch (err) {
+                container.innerHTML = `<p class="text-xs text-gray-500 p-4">ルームID: <strong>#${escapeHtml(App.roomId)}</strong></p>`;
+            }
+        }
+
+        function showShareModal() {
+            renderShareQRCode();
+            openModal('modal-share');
+        }
+
+        /**
+         * Event Listeners & UI Binding
+         */
+        function setupEventListeners() {
+            // Form Submit & Textarea Resize
+            $('chat-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                sendMessage();
+            });
+
+            const msgInput = $('message-input');
+            msgInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            msgInput.addEventListener('input', adjustTextareaHeight);
+
+            // Drag & Drop / Paste Images
+            window.addEventListener('paste', (e) => {
+                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (let item of items) {
+                    if (item.type.indexOf('image') !== -1) {
+                        const file = item.getAsFile();
+                        handleImageSelection(file);
+                    }
+                }
+            });
+
+            // Cancel Reply & Image Attachments
+            $('btn-cancel-reply').addEventListener('click', cancelReply);
+            $('btn-cancel-image').addEventListener('click', cancelImage);
+            $('btn-attach-image').addEventListener('click', () => $('image-input').click());
+            $('image-input').addEventListener('change', (e) => handleImageSelection(e.target.files[0]));
+
+            // Modal Toggles
+            $('btn-share-qr').addEventListener('click', showShareModal);
+            $('tab-share-url').addEventListener('click', () => {
+                App.shareMode = 'url';
+                renderShareQRCode();
+            });
+            $('tab-share-file').addEventListener('click', () => {
+                App.shareMode = 'file';
+                renderShareQRCode();
+            });
+            $('btn-download-invite-html').addEventListener('click', downloadInviteHtmlFile);
+            $('btn-join-room').addEventListener('click', () => {
+                const newRoom = $('join-room-input').value.trim();
+                if (!newRoom) return;
+                App.roomId = newRoom;
+                window.__EMBEDDED_ROOM_ID__ = newRoom;
+                $('room-tag').textContent = `#${newRoom}`;
+                $('join-room-input').value = '';
+                loadMessages();
+                renderMessages();
+                initBroadcastChannel();
+                subscribeToRoomMessages();
+                renderShareQRCode();
+                showToast(`ルーム #${newRoom} に移動しました`);
+            });
+            $('btn-profile-modal').addEventListener('click', () => {
+                $('profile-name-input').value = App.profile.name;
+                $('profile-status-input').value = App.profile.status;
+                updateProfilePreview();
+                openModal('modal-profile');
+            });
+            $('btn-theme-modal').addEventListener('click', () => {
+                syncColorInputsUI();
+                openModal('modal-theme');
+            });
+            $('btn-data-modal').addEventListener('click', () => {
+                updateCloudStatusUI(Boolean(db && firebaseUser));
+                openModal('modal-data');
+            });
+
+            $('btn-save-firebase-config').addEventListener('click', () => {
+                const raw = $('firebase-config-input').value.trim();
+                if (!raw) {
+                    localStorage.removeItem('linkchat_firebase_config');
+                    showToast('クラウド設定をクリアしました（再読み込みで反映）');
+                    return;
+                }
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (!parsed.apiKey || !parsed.projectId) {
+                        showToast('apiKey と projectId が含まれる正しいJSONを入力してください');
+                        return;
+                    }
+                    localStorage.setItem('linkchat_firebase_config', JSON.stringify(parsed));
+                    showToast('設定を保存しました！ページを再読み込みして接続します...');
+                    setTimeout(() => window.location.reload(), 1000);
+                } catch (e) {
+                    showToast('JSONの形式が正しくありません');
+                }
+            });
+
+            $('btn-export-github-html').addEventListener('click', downloadGithubPublishHtml);
+
+            // Close Modals & Copy Link
+            document.querySelectorAll('.btn-close-modal').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const modal = btn.closest('[role="dialog"]');
+                    if (modal) modal.classList.add('hidden');
+                });
+            });
+
+            $('btn-copy-link').addEventListener('click', () => {
+                const input = $('share-url-input');
+                input.select();
+                input.setSelectionRange(0, 99999);
+                try {
+                    document.execCommand('copy');
+                    showToast('リンクをクリップボードにコピーしました');
+                } catch (e) {
+                    showToast('コピーに失敗しました');
+                }
+            });
+
+            // Profile Form Submit
+            $('profile-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const nameVal = $('profile-name-input').value.trim();
+                if (nameVal) App.profile.name = nameVal;
+                App.profile.status = $('profile-status-input').value.trim() || 'オンライン';
+                localStorage.setItem('linkchat_profile', JSON.stringify(App.profile));
+                renderHeader();
+                closeModal('modal-profile');
+                showToast('プロフィールを保存しました');
+            });
+
+            $('profile-avatar-input').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        App.profile.avatar = ev.target.result;
+                        updateProfilePreview();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            $('btn-remove-avatar').addEventListener('click', () => {
+                App.profile.avatar = '';
+                updateProfilePreview();
+            });
+
+            // Theme Options Binding
+            document.querySelectorAll('.btn-select-theme').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    App.theme.preset = btn.dataset.theme;
+                    App.theme.customColors = { bg: '', surface: '', primary: '', text: '', bubbleSelf: '' };
+                    saveTheme();
+                });
+            });
+
+            document.querySelectorAll('.btn-font-size').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    App.theme.fontSize = btn.dataset.size;
+                    saveTheme();
+                });
+            });
+
+            document.querySelectorAll('.btn-bubble-style').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    App.theme.bubbleRadius = btn.dataset.radius;
+                    saveTheme();
+                });
+            });
+
+            // Custom Color Pickers & Hex Code Inputs (Local Storage Only)
+            ['bg', 'surface', 'primary', 'text', 'bubbleSelf'].forEach(key => {
+                const picker = $(`picker-color-${key}`);
+                const hexInput = $(`hex-color-${key}`);
+                if (!picker || !hexInput) return;
+
+                picker.addEventListener('input', (e) => {
+                    const val = e.target.value;
+                    hexInput.value = val.toUpperCase();
+                    if (!App.theme.customColors) App.theme.customColors = {};
+                    App.theme.customColors[key] = val;
+                    localStorage.setItem('linkchat_theme', JSON.stringify(App.theme));
+                    applyTheme();
+                });
+
+                hexInput.addEventListener('input', (e) => {
+                    let val = e.target.value.trim();
+                    if (val && !val.startsWith('#')) val = '#' + val;
+                    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                        picker.value = val;
+                        if (!App.theme.customColors) App.theme.customColors = {};
+                        App.theme.customColors[key] = val;
+                        saveTheme();
+                    }
+                });
+            });
+
+            $('btn-reset-custom-colors').addEventListener('click', () => {
+                App.theme.customColors = { bg: '', surface: '', primary: '', text: '', bubbleSelf: '' };
+                saveTheme();
+            });
+
+            // Export & Import Chat Data
+            $('btn-export-chat').addEventListener('click', () => {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(App.messages, null, 2));
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.setAttribute("href", dataStr);
+                downloadAnchor.setAttribute("download", `LinkChat_Room_${App.roomId}_${Date.now()}.json`);
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                downloadAnchor.remove();
+            });
+
+            $('import-chat-input').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const importedMsgs = JSON.parse(event.target.result);
+                        if (Array.isArray(importedMsgs)) {
+                            App.messages = importedMsgs;
+                            saveMessagesToStorage();
+                            renderMessages();
+                            closeModal('modal-data');
+                            showToast('チャット履歴をインポートしました');
+                        } else {
+                            showToast('無効なデータ形式です');
+                        }
+                    } catch (err) {
+                        showToast('JSONの読み込みに失敗しました');
+                    }
+                };
+                reader.readAsText(file);
+            });
+
+            $('btn-clear-chat').addEventListener('click', () => {
+                openModal('modal-confirm');
+            });
+
+            $('btn-confirm-cancel').addEventListener('click', () => {
+                closeModal('modal-confirm');
+            });
+
+            $('btn-confirm-ok').addEventListener('click', async () => {
+                App.messages = [];
+                saveMessagesToStorage();
+                renderMessages();
+
+                if (App.broadcastChannel) {
+                    App.broadcastChannel.postMessage({ type: 'CLEAR_HISTORY' });
+                }
+
+                closeModal('modal-confirm');
+                closeModal('modal-data');
+                showToast('履歴を削除しました');
+            });
+
+            // Lightbox Close
+            $('lightbox').addEventListener('click', () => $('lightbox').classList.add('hidden'));
+        }
+
+        /**
+         * Reply & Image Attachment Helpers
+         */
+        window.setReplyTarget = function(messageId) {
+            const target = App.messages.find(m => m.id === messageId);
+            if (!target) return;
+            App.replyTo = target;
+            $('reply-target-name').textContent = `${target.userName} への返信`;
+            $('reply-target-text').textContent = target.text || '[画像]';
+            $('reply-preview-bar').classList.remove('hidden');
+            $('message-input').focus();
+        };
+
+        function cancelReply() {
+            App.replyTo = null;
+            $('reply-preview-bar').classList.add('hidden');
+        }
+
+        function handleImageSelection(file) {
+            if (!file || !file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_DIM = 800;
+                    let w = img.width;
+                    let h = img.height;
+                    if (w > h && w > MAX_DIM) {
+                        h = Math.round((h * MAX_DIM) / w);
+                        w = MAX_DIM;
+                    } else if (h > MAX_DIM) {
+                        w = Math.round((w * MAX_DIM) / h);
+                        h = MAX_DIM;
+                    }
+                    canvas.width = w;
+                    canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    App.pendingImage = canvas.toDataURL('image/jpeg', 0.75);
+                    $('image-preview-thumb').src = App.pendingImage;
+                    $('image-preview-bar').classList.remove('hidden');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function cancelImage() {
+            App.pendingImage = null;
+            $('image-input').value = '';
+            $('image-preview-bar').classList.add('hidden');
+        }
+
+        window.scrollToMessage = function(messageId) {
+            const el = document.getElementById(`msg-${messageId}`);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.classList.remove('highlight-flash');
+                void el.offsetWidth;
+                el.classList.add('highlight-flash');
+            }
+        };
+
+        window.openLightbox = function(src) {
+            $('lightbox-img').src = src;
+            $('lightbox').classList.remove('hidden');
+        };
+
+        /**
+         * Profile Modal Preview Helper
+         */
+        function updateProfilePreview() {
+            if (App.profile.avatar) {
+                $('profile-avatar-preview').src = App.profile.avatar;
+                $('profile-avatar-preview').classList.remove('hidden');
+                $('profile-avatar-initial-preview').classList.add('hidden');
+            } else {
+                $('profile-avatar-preview').classList.add('hidden');
+                $('profile-avatar-initial-preview').classList.remove('hidden');
+                $('profile-avatar-initial-preview').textContent = ($('profile-name-input').value || 'U').charAt(0).toUpperCase();
+            }
+        }
+
+        /**
+         * Save Theme State
+         */
+        function saveTheme() {
+            localStorage.setItem('linkchat_theme', JSON.stringify(App.theme));
+            applyTheme();
+            showToast('テーマ設定を更新しました');
+        }
+
+        /**
+         * Utilities
+         */
+        function adjustTextareaHeight() {
+            const input = $('message-input');
+            input.style.height = 'auto';
+            input.style.height = Math.min(input.scrollHeight, 128) + 'px';
+        }
+
+        function openModal(id) {
+            $(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            $(id).classList.add('hidden');
+        }
+
+        function showToast(msg) {
+            const container = $('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 text-xs sm:text-sm font-medium px-4 py-2.5 rounded-xl shadow-lg border border-gray-700 pointer-events-auto transition-all transform translate-y-2 opacity-0';
+            toast.textContent = msg;
+
+            container.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        }
+
+        // Start Application
+        initApp();
+    </script>
+
+</body></html>
